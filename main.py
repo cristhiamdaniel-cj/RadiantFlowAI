@@ -23,6 +23,11 @@ def main():
     print(f"Impp esperado: 8.84 A, obtenido: {impp} A")
     print(f"Pmax esperado: 340 W, obtenido: {p_max} W")
 
+    # Llamar las gráficas
+    g_values = [300, 500, 700, 1000]
+    t_values = [25, 35, 45, 55]
+    model.generate_graphs(g_values, t_values)
+    model.single_graph(irradiance, temperature)
 
 
 if __name__ == "__main__":

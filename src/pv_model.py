@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -146,98 +147,86 @@ class PVModel:
 
         return df
 
-    def generate_graphs(self, image_path='../images'):
-        G_values = [300, 500, 700, 1000]
-        T_values = [25, 35, 45, 55]
+    def generate_graphs(self, G_values, T_values, image_path='./img'):
 
         fig, axs = plt.subplots(2, 2, figsize=(10, 8))
 
         # Gráficas I-V y P-V para diferentes valores de G a 25° C
         for G in G_values:
-            resultados, V_max, I_max, P_max = self.pv_model_updated(G, 298)
-            axs[0, 0].plot(resultados['Voltaje (V)'], resultados['Corriente (A)'], label=f'G={G} W/m²')
-            axs[0, 1].plot(resultados['Voltaje (V)'], resultados['Potencia (W)'], label=f'G={G} W/m²')
+            resultados, v_max, i_max, p_max = self.pv_model(25, G)
+            axs[0, 0].plot(resultados['Voltage (V)'], resultados['Current (A)'], label=f'G={G} W/m²')
+            axs[0, 1].plot(resultados['Voltage (V)'], resultados['Power (W)'], label=f'G={G} W/m²')
 
         # Gráficas I-V y P-V para diferentes valores de T a G=1000
         for T in T_values:
-            resultados, V_max, I_max, P_max = self.pv_model_updated(1000, T + 273.15)
-            axs[1, 0].plot(resultados['Voltaje (V)'], resultados['Corriente (A)'], label=f'T={T} °C')
-            axs[1, 1].plot(resultados['Voltaje (V)'], resultados['Potencia (W)'], label=f'T={T} °C')
+            resultados, v_max, i_max, p_max = self.pv_model(T, 1000)
+            axs[1, 0].plot(resultados['Voltage (V)'], resultados['Current (A)'], label=f'T={T} °C')
+            axs[1, 1].plot(resultados['Voltage (V)'], resultados['Power (W)'], label=f'T={T} °C')
 
-        axs[0, 0].set_xlabel('Voltaje (V)')
-        axs[0, 0].set_ylabel('Corriente (A)')
+        axs[0, 0].set_xlabel('Voltage (V)')
+        axs[0, 0].set_ylabel('Current (A)')
         axs[0, 0].set_title('Curva I-V a 25°C')
         axs[0, 0].legend()
         axs[0, 0].grid(True)
         axs[0, 0].set_ylim(bottom=0)
 
-        axs[0, 1].set_xlabel('Voltaje (V)')
-        axs[0, 1].set_ylabel('Potencia (W)')
+        axs[0, 1].set_xlabel('Voltage (V)')
+        axs[0, 1].set_ylabel('Power (W)')
         axs[0, 1].set_title('Curva P-V a 25°C')
         axs[0, 1].legend()
         axs[0, 1].grid(True)
         axs[0, 1].set_ylim(bottom=0)
 
-        axs[1, 0].set_xlabel('Voltaje (V)')
-        axs[1, 0].set_ylabel('Corriente (A)')
+        axs[1, 0].set_xlabel('Voltage (V)')
+        axs[1, 0].set_ylabel('Current (A)')
         axs[1, 0].set_title('Curva I-V a G=1000 W/m²')
         axs[1, 0].legend()
         axs[1, 0].grid(True)
         axs[1, 0].set_ylim(bottom=0)
 
-        axs[1, 1].set_xlabel('Voltaje (V)')
-        axs[1, 1].set_ylabel('Potencia (W)')
+        axs[1, 1].set_xlabel('Voltage (V)')
+        axs[1, 1].set_ylabel('Power (W)')
         axs[1, 1].set_title('Curva P-V a G=1000 W/m²')
         axs[1, 1].legend()
         axs[1, 1].grid(True)
         axs[1, 1].set_ylim(bottom=0)
 
-        # Crear la carpeta si no existe
-        if not os.path.exists(image_path):
-            os.makedirs(image_path)
-
         # Guardar la figura
         plt.tight_layout()
         plt.savefig(os.path.join(image_path, 'curvas_pv.png'), dpi=300)
 
-    def single_graph(self, G, T, image_path='../images'):
-        resultados, V_max, I_max, P_max = self.pv_model_updated(G, T)
-
+    def single_graph(self, G, T, image_path='./img'):
+        resultados, v_max, i_max, p_max = self.pv_model(T, G)
         # Gráficos
         fig, ax1 = plt.subplots()
 
         color = 'tab:blue'
-        ax1.set_xlabel('Voltaje (V)')
-        ax1.set_ylabel('Corriente (A)', color=color)
-        ax1.plot(resultados['Voltaje (V)'], resultados['Corriente (A)'], color=color)
-        ax1.plot(V_max, I_max, 'ro')
-        ax1.axvline(x=V_max, color='gray', linestyle='--')  # Línea punteada
+        ax1.set_xlabel('Voltage (V)')
+        ax1.set_ylabel('Current (A)', color=color)
+        ax1.plot(resultados['Voltage (V)'], resultados['Current (A)'], color=color)
+        ax1.plot(v_max, i_max, 'ro')
+        ax1.axvline(x=v_max, color='gray', linestyle='--')  # Línea punteada
         ax1.tick_params(axis='y', labelcolor=color)
         ax1.grid()
 
         ax2 = ax1.twinx()
         color = 'tab:green'
-        ax2.set_ylabel('Potencia (W)', color=color)
-        ax2.plot(resultados['Voltaje (V)'], resultados['Potencia (W)'], color=color)
-        ax2.plot(V_max, P_max, 'ro')
+        ax2.set_ylabel('Power (W)', color=color)
+        ax2.plot(resultados['Voltage (V)'], resultados['Power (W)'], color=color)
+        ax2.plot(v_max, p_max, 'ro')
         ax2.tick_params(axis='y', labelcolor=color)
 
         plt.title('Curvas I-V y P-V')
 
         # Crear tabla debajo de la gráfica
-        data = [['V_max (V)', f'{V_max:.2f} V'],
-                ['I_max (A)', f'{I_max:.2f} A'],
-                ['P_max (W)', f'{P_max:.2f} W']]
-        table = plt.table(cellText=data, loc='bottom', colWidths=[0.2, 0.2])
+        data = [['v_max (V)', f'{v_max:.2f} V'],
+                ['i_max (A)', f'{i_max:.2f} A'],
+                ['p_max (W)', f'{p_max:.2f} W']]
+        plt.table(cellText=data, loc='bottom', colWidths=[0.2, 0.2])
 
         # Ajustar la posición de la gráfica para hacer espacio para la tabla
         plt.subplots_adjust(bottom=0.2)
 
-        # Crear la carpeta si no existe
-        if not os.path.exists(image_path):
-            os.makedirs(image_path)
-
         # Guardar la figura
         plt.tight_layout()
         plt.savefig(os.path.join(image_path, 'curvas_pv_single.png'), dpi=300)
-
