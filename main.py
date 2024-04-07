@@ -10,11 +10,13 @@ def main():
     num_cells = 72
     series_resistance = 0.39  # Ohms
     shunt_resistance = 545.82  # Ohms
-
     # Convertir los coeficientes de temperatura de porcentaje por Kelvin a valor absoluto basado en isc y voc
     temp_coeff_isc = isc * (0.037 / 100)  # A/K
+
     model = PVModel(irradiance, temperature, isc, voc, num_cells, series_resistance, shunt_resistance, temp_coeff_isc)
 
+    """ 
+    ##################### Simulación de un panel fotovoltaico #####################
     # Ejecutar el modelo
     results, vmpp, impp, p_max = model.pv_model(25, 1000)
 
@@ -28,6 +30,14 @@ def main():
     t_values = [25, 35, 45, 55]
     model.generate_graphs(g_values, t_values)
     model.single_graph(irradiance, temperature)
+    """
+
+    # Simulaciones para diferentes condiciones de temperatura e irradiancia
+    irradiance = range(100, 1001, 100)
+    temperature = range(15, 66)
+    model.run_simulation(temperature, irradiance)
+    model.save_results()
+    model.read_results()
 
 
 if __name__ == "__main__":

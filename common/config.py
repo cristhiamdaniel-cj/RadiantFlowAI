@@ -1,4 +1,9 @@
 # config.py
+import logging
+
+logging.basicConfig(filename='pv_simulation.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 # Constantes físicas
 CHARGE = 1.60217646e-19  # Carga elemental (Coulombs)

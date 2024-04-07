@@ -40,6 +40,7 @@ class PVModel:
         :param irradiance: Irradiancia en W/m^2.
         :return: DataFrame con los valores de corriente, voltaje y potencia para el panel.
         """
+        config.logger.info(f'Iniciando simulación para temperatura={temperature} °C, irradiancia={irradiance} W/m²')
         self.validate_inputs(temperature, irradiance)
         temperature_k = temperature + 273.15  # Convertir a Kelvin
 
@@ -75,8 +76,12 @@ class PVModel:
                 i_solution = fsolve(lambda i: current_voltage_relation(v, i), self.isc)[0]
                 current_values.append(i_solution)
             except RuntimeError as e:
-                print(f"Error de convergencia para V={v} V: {e}")
+                config.logger.error(f'Error de convergencia para V={v} V: {e}')
                 current_values.append(np.nan)
+
+        config.logger.info(f'Finalizando simulación. Vmpp={voltage_values[np.argmax(current_values)]} V, '
+                           f'Impp={np.max(current_values)} A, '
+                           f'Pmax={np.max(voltage_values * np.array(current_values))} W')
 
         power_values = voltage_values * np.array(current_values)
         results = pd.DataFrame(
@@ -118,7 +123,9 @@ class PVModel:
                 resultados['Temperatura'] = T
                 resultados['Irradiancia'] = G
                 results_list.append(resultados)
-                print(f"Simulación para T={T}°C, G={G}W/m^2 completada.")
+                config.logger.info(
+                    f"Simulación finalizada para T={T} °C, G={G} W/m². Vmpp={vmpp:.2f} V, "
+                    f"Impp={impp:.2f} A, Pmax={p_max:.2f} W")
         self.df = pd.concat(results_list, ignore_index=True)
 
     def save_results(self, filename='resultados_simulacion.parquet'):
@@ -128,24 +135,24 @@ class PVModel:
         :return: None
         """
         self.df.to_parquet(filename, index=False)
-        print(f"Resultados guardados en '{filename}'.")
+        config.logger.info(f"Resultados guardados en {filename}")
 
     @staticmethod
     def read_results(filename='resultados_simulacion.parquet'):
         """
         Lee los resultados de la simulación desde un archivo parquet.
         :param filename: Nombre del archivo a leer.
-        :return: DataFrame con los resultados de la simulación.
+        :return: None
         """
         df = pd.read_parquet(filename)
         print(df.info())
         print()
         print(df.sample(5))
         print()
-        # Imprimir la el punto de máxima potencia para cada combinación de temperatura e irradiancia
-        print(df.loc[df.groupby(['Temperatura', 'Irradiancia'])['Power (W)'].idxmax()])
-
-        return df
+        print(df.describe())
+        print()
+        df_sub = df[(df['Temperatura'].isin([15, 25, 35, 45, 55])) & (df['Irradiancia'].isin([100, 500, 1000]))]
+        print(df_sub.loc[df_sub.groupby(['Temperatura', 'Irradiancia'])['Power (W)'].idxmax()])
 
     def generate_graphs(self, G_values, T_values, image_path='./img'):
 
@@ -194,6 +201,7 @@ class PVModel:
         # Guardar la figura
         plt.tight_layout()
         plt.savefig(os.path.join(image_path, 'curvas_pv.png'), dpi=300)
+        config.logger.info(f"Gráficas guardadas en {os.path.join(image_path, 'curvas_pv.png')}")
 
     def single_graph(self, G, T, image_path='./img'):
         resultados, v_max, i_max, p_max = self.pv_model(T, G)
@@ -230,3 +238,4 @@ class PVModel:
         # Guardar la figura
         plt.tight_layout()
         plt.savefig(os.path.join(image_path, 'curvas_pv_single.png'), dpi=300)
+        config.logger.info(f"Gráfica guardada en {os.path.join(image_path, 'curvas_pv_single.png')}")
